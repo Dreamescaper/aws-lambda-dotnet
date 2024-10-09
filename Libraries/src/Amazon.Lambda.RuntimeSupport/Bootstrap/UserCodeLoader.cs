@@ -168,7 +168,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
             }
 
             internalLogger.LogDebug($"UCL : Retrieving field '{LambdaLoggingActionFieldName}'");
-            var loggingActionField = lambdaILoggerType.GetTypeInfo().GetField(LambdaLoggingActionFieldName, BindingFlags.NonPublic | BindingFlags.Static);
+            var loggingActionField = lambdaILoggerType.GetField(LambdaLoggingActionFieldName, BindingFlags.NonPublic | BindingFlags.Static);
             if (loggingActionField == null)
             {
                 throw LambdaExceptions.ValidationException(Errors.UserCodeLoader.Internal.UnableToRetrieveField, LambdaLoggingActionFieldName, Types.LambdaLoggerTypeName);
@@ -237,8 +237,8 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
             // and it's also the more common case.
             // RuntimeMethodInfo::ToString() always contains a ' ' character.
             // So one of the two lookup methods would always return null.
-            var customerMethodInfo = FindCustomerMethodByName(type.GetTypeInfo()) ??
-                                     FindCustomerMethodBySignature(type.GetTypeInfo());
+            var customerMethodInfo = FindCustomerMethodByName(type) ??
+                                     FindCustomerMethodBySignature(type);
 
             if (customerMethodInfo == null)
             {
@@ -249,7 +249,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
             return customerMethodInfo;
         }
 
-        private MethodInfo FindCustomerMethodByName(TypeInfo typeInfo)
+        private MethodInfo FindCustomerMethodByName(Type typeInfo)
         {
             try
             {
@@ -265,7 +265,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
                     }
 
                     // check base type
-                    return FindCustomerMethodByName(parentType.GetTypeInfo());
+                    return FindCustomerMethodByName(parentType);
                 }
 
                 return mi;
@@ -276,7 +276,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
             }
         }
 
-        private MethodInfo FindCustomerMethodBySignature(TypeInfo typeInfo)
+        private MethodInfo FindCustomerMethodBySignature(Type typeInfo)
         {
             // get all methods
             var matchingMethods = typeInfo.GetMethods(Constants.DefaultFlags)
@@ -304,7 +304,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
                 }
 
                 // check base type
-                return FindCustomerMethodBySignature(parentType.GetTypeInfo());
+                return FindCustomerMethodBySignature(parentType);
             }
         }
 
@@ -318,7 +318,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
             return string.Equals(methodName, method.Name, StringComparison.Ordinal);
         }
 
-        private Exception GetMultipleMethodsValidationException(TypeInfo typeInfo)
+        private Exception GetMultipleMethodsValidationException(Type typeInfo)
         {
             var signatureList = typeInfo.GetMethods(Constants.DefaultFlags)
                 .Where(mi => SignatureMatches(_handler.MethodName, mi) || NameMatches(_handler.MethodName, mi))
@@ -339,13 +339,13 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
         private object ConstructCustomSerializer(Attribute serializerAttribute)
         {
             var attributeType = serializerAttribute.GetType();
-            var serializerTypeProperty = attributeType.GetTypeInfo().GetProperty("SerializerType");
+            var serializerTypeProperty = attributeType.GetProperty("SerializerType");
             if (serializerTypeProperty == null)
             {
                 throw LambdaExceptions.ValidationException(Errors.UserCodeLoader.InvalidClassNoSerializerType, attributeType.FullName);
             }
 
-            if (!Types.TypeType.GetTypeInfo().IsAssignableFrom(serializerTypeProperty.PropertyType))
+            if (!Types.TypeType.IsAssignableFrom(serializerTypeProperty.PropertyType))
             {
                 throw LambdaExceptions.ValidationException(Errors.UserCodeLoader.InvalidClassSerializerTypeWrongType,
                     attributeType.FullName, Types.TypeType.FullName);
@@ -358,7 +358,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
                     attributeType.FullName);
             }
 
-            var serializerTypeInfo = serializerType.GetTypeInfo();
+            var serializerTypeInfo = serializerType;
 
             var constructor = serializerTypeInfo.GetConstructor(Type.EmptyTypes);
             if (constructor == null)

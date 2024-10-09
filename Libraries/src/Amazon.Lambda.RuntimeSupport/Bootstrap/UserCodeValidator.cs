@@ -34,24 +34,22 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
         /// <exception cref="LambdaValidationException">Throws when customer type is not lambda compatible.</exception>
         internal static void ValidateCustomerType(Type type, MethodInfo method)
         {
-            var typeInfo = type.GetTypeInfo();
-
             // generic customer type is not supported
-            if (typeInfo.IsGenericType)
+            if (type.IsGenericType)
             {
                 throw LambdaExceptions.ValidationException(Errors.UserCodeLoader.HandlerTypeGeneric,
                     type.FullName);
             }
 
             // abstract customer type is not support if customer method is not static
-            if (!method.IsStatic && typeInfo.IsAbstract)
+            if (!method.IsStatic && type.IsAbstract)
             {
                 throw LambdaExceptions.ValidationException(Errors.UserCodeLoader.HandlerTypeAbstract,
                     method.ToString(), type.FullName);
             }
 
-            var isClass = typeInfo.IsClass;
-            var isStruct = typeInfo.IsValueType && !typeInfo.IsPrimitive && !typeInfo.IsEnum;
+            var isClass = type.IsClass;
+            var isStruct = type.IsValueType && !type.IsPrimitive && !type.IsEnum;
 
             // customer type must be class or struct
             if (!isClass && !isStruct)
@@ -118,7 +116,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
         /// <exception cref="LambdaValidationException">Thrown when customer serializer doesn't match with expected serializer definition</exception>
         internal static void ValidateILambdaSerializerType(Type type)
         {
-            var typeInfo = type.GetTypeInfo();
+            var typeInfo = type;
 
             var mismatchReason = CheckILambdaSerializerType(typeInfo);
             if (!string.IsNullOrEmpty(mismatchReason))
@@ -134,7 +132,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
         /// </summary>
         /// <param name="typeInfo">TypeInfo of the customer serializer.</param>
         /// <returns>Error string if validation fails else null.</returns>
-        private static string CheckILambdaSerializerType(TypeInfo typeInfo)
+        private static string CheckILambdaSerializerType(Type typeInfo)
         {
             if (!typeInfo.IsInterface)
             {
@@ -261,7 +259,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
 
             var loggerProperty = ValidateInterfaceProperty(iLambdaContextType, "Logger", Types.ILambdaLoggerTypeName);
             var iLambdaLoggerType = loggerProperty.PropertyType;
-            var logMethod = iLambdaLoggerType.GetTypeInfo().GetMethod("Log", new[] {Types.StringType}, null);
+            var logMethod = iLambdaLoggerType.GetMethod("Log", new[] {Types.StringType}, null);
             if (logMethod == null)
             {
                 throw LambdaExceptions.ValidationException(Errors.UserCodeLoader.TypeMissingLogMethod, iLambdaLoggerType.FullName);
@@ -281,7 +279,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
 
         private static PropertyInfo ValidateInterfaceProperty(Type type, string propName, string propTypeName)
         {
-            var propertyInfo = type.GetTypeInfo().GetProperty(propName, Constants.DefaultFlags);
+            var propertyInfo = type.GetProperty(propName, Constants.DefaultFlags);
             if (propertyInfo == null || !string.Equals(propertyInfo.PropertyType.FullName, propTypeName, StringComparison.Ordinal))
             {
                 throw LambdaExceptions.ValidationException(Errors.UserCodeLoader.TypeMissingExpectedProperty, type.FullName, propName, propTypeName);

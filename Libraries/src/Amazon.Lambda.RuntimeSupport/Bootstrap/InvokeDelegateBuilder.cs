@@ -97,7 +97,6 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
             var finalExpression = Expression.Lambda<Action<Stream, ILambdaContext, Stream>>(outputExpression, inStreamParameter, contextParameter, outStreamParameter);
 #if DEBUG
             var finalExpressionDebugView = typeof(Expression)
-                .GetTypeInfo()
                 .GetProperty("DebugView", BindingFlags.Instance | BindingFlags.NonPublic)
                 .GetValue(finalExpression);
             _logger.LogDebug($"UCL : Constructed final expression:\n'{finalExpressionDebugView}'");
@@ -227,7 +226,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
             var outputType = _customerMethodInfo.ReturnType;
             var taskTType = GetTaskTSubclassOrNull(outputType);
             var outputIsTaskT = taskTType != null;
-            var outputIsTask = Types.TaskType.GetTypeInfo().IsAssignableFrom(outputType);
+            var outputIsTask = Types.TaskType.IsAssignableFrom(outputType);
 
             if (outputIsTaskT)
             {
@@ -266,7 +265,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
             var outputType = _customerMethodInfo.ReturnType;
             var taskTType = GetTaskTSubclassOrNull(outputType);
             var isTaskT = taskTType != null;
-            var isTask = Types.TaskType.GetTypeInfo().IsAssignableFrom(outputType);
+            var isTask = Types.TaskType.IsAssignableFrom(outputType);
             var isVoid = outputType == Types.VoidType;
 
             var hasData = (!isVoid && !isTask) || isTaskT;
@@ -303,7 +302,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
                     return type;
             }
 
-            var baseType = type.GetTypeInfo().BaseType;
+            var baseType = type.BaseType;
             return GetTaskTSubclassOrNull(baseType);
         }
 
@@ -327,7 +326,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
             Type iLambdaSerializerType = null;
 
             // subclasses of Stream are allowed as customer method output
-            if (Types.StreamType.GetTypeInfo().IsAssignableFrom(dataType))
+            if (Types.StreamType.IsAssignableFrom(dataType))
             {
                 converter = StreamSerializer.Instance;
             }
@@ -341,7 +340,7 @@ namespace Amazon.Lambda.RuntimeSupport.Bootstrap
 
                 iLambdaSerializerType = customerSerializerInstance
                     .GetType()
-                    .GetTypeInfo()
+                    
                     .GetInterface(Types.ILambdaSerializerTypeName);
                 genericTypes = new[] {dataType};
             }

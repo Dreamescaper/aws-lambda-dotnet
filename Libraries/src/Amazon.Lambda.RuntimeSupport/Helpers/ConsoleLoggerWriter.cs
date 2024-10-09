@@ -244,7 +244,7 @@ namespace Amazon.Lambda.RuntimeSupport.Helpers
             if (lambdaILoggerType == null)
                 return;
 
-            var loggingActionField = lambdaILoggerType.GetTypeInfo().GetField("_loggingAction", BindingFlags.NonPublic | BindingFlags.Static);
+            var loggingActionField = lambdaILoggerType.GetField("_loggingAction", BindingFlags.NonPublic | BindingFlags.Static);
             if (loggingActionField == null)
                 return;
 
