@@ -33,6 +33,9 @@
         /// The detail content in the example above is very simple, just two fields.
         /// AWS API call events have detail objects with around 50 fields nested several levels deep.
         /// </summary>
+#if NETCOREAPP3_1_OR_GREATER
+        [System.Text.Json.Serialization.JsonConverter(typeof(Converters.ObjectOrStringifiedEmptyObjectConverter<T>))]
+#endif
         public T Detail { get; set; }
 
         /// <summary>

@@ -14,6 +14,7 @@ namespace Amazon.Lambda.Serialization.Json
         private JsonToMemoryStreamDataConverter jsonToMemoryStreamDataConverter;
         private JsonNumberToDateTimeDataConverter jsonNumberToDateTimeDataConverter;
         private JsonToMemoryStreamListDataConverter jsonToMemoryStreamListDataConverter;
+        private ObjectOrStringifiedEmptyObjectConverter objectOrStringifiedEmptyObjectConverter;
 
         JsonToMemoryStreamDataConverter StreamDataConverter
         {
@@ -27,7 +28,7 @@ namespace Amazon.Lambda.Serialization.Json
                 return jsonToMemoryStreamDataConverter;
             }
         }
-        
+
         JsonToMemoryStreamListDataConverter StreamListDataConverter
         {
             get
@@ -40,7 +41,7 @@ namespace Amazon.Lambda.Serialization.Json
                 return jsonToMemoryStreamListDataConverter;
             }
         }
-        
+
         JsonNumberToDateTimeDataConverter DateTimeConverter
         {
             get
@@ -53,7 +54,20 @@ namespace Amazon.Lambda.Serialization.Json
                 return jsonNumberToDateTimeDataConverter;
             }
         }
-        
+
+        ObjectOrStringifiedEmptyObjectConverter ObjectOrStringifiedEmptyObjectConverter
+        {
+            get
+            {
+                if (objectOrStringifiedEmptyObjectConverter == null)
+                {
+                    objectOrStringifiedEmptyObjectConverter = new ObjectOrStringifiedEmptyObjectConverter();
+                }
+
+                return objectOrStringifiedEmptyObjectConverter;
+            }
+        }
+
         protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
         {
             IList<JsonProperty> properties = base.CreateProperties(type, memberSerialization);
@@ -140,6 +154,10 @@ namespace Amazon.Lambda.Serialization.Json
                     if (property.PropertyName.Equals("DetailType", StringComparison.Ordinal))
                     {
                         property.PropertyName = "detail-type";
+                    }
+                    else if (property.PropertyName.Equals("Detail", StringComparison.Ordinal))
+                    {
+                        property.MemberConverter = ObjectOrStringifiedEmptyObjectConverter;
                     }
                 }
             }
